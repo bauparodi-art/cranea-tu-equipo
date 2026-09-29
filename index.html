@@ -261,6 +261,32 @@
     font-size: 20px;
     font-variant-numeric: tabular-nums;
   }
+  /* ---------- Tabla y carga de puntajes ---------- */
+  .tabla-pos td.pos {
+    width: 36px;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+    color: var(--suave);
+  }
+  .tabla-pos tr.yo td { font-weight: 600; color: var(--cesped); }
+  .scroll { overflow-x: auto; margin-top: 12px; }
+  .carga { border-collapse: collapse; min-width: 640px; }
+  .carga th {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--suave);
+    text-align: center;
+    padding: 4px 2px;
+  }
+  .carga th:first-child, .carga td:first-child { text-align: left; }
+  .carga td { text-align: center; padding: 4px 2px; }
+  .carga td:first-child { font-size: 15px; min-width: 150px; }
+  .carga td:first-child small { color: var(--suave); }
+  .carga input[type=number] { width: 54px; padding: 6px 4px; text-align: center; }
+  .carga input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--cesped); }
+  .carga input:disabled { opacity: .25; }
+
   .error { color: var(--rojo); font-weight: 600; }
   .ok { color: var(--cesped); font-weight: 600; }
   [hidden] { display: none !important; }
@@ -313,6 +339,19 @@
       <p id="msg-equipo"></p>
     </section>
 
+    <!-- Tabla de posiciones -->
+    <section id="vista-tabla">
+      <h2>Tabla</h2>
+      <label>Ver
+        <select id="sel-tabla"></select>
+      </label>
+      <div id="tabla-posiciones"></div>
+      <div id="bloque-puntos-jugadores" hidden>
+        <h3>Puntos por jugador</h3>
+        <div id="puntos-jugadores"></div>
+      </div>
+    </section>
+
     <!-- Admin -->
     <section id="panel-admin" hidden>
       <h2>Aprobar jugadores</h2>
@@ -326,6 +365,13 @@
         <button id="btn-fecha">Agregar fecha</button>
       </div>
       <div id="lista-fechas"></div>
+
+      <h2>Cargar puntajes</h2>
+      <p class="nota">Cargá solo a los que jugaron: si dejás la nota vacía, cuenta como que no jugó y entra su suplente. VI: valla invicta. GR: goles recibidos. GC: gol en contra. TA: amarillas. TR: roja. PA / PE: penal atajado / errado. Si corregís algo, volvé a guardar y se recalcula.</p>
+      <label>Fecha
+        <select id="sel-carga"></select>
+      </label>
+      <div id="form-puntajes"></div>
     </section>
 
     <h2>Plantel</h2>
@@ -425,11 +471,12 @@
       sb.from("equipos").select("*").eq("user_id", uid).maybeSingle(),
       sb.from("equipo_jugadores").select("*").eq("user_id", uid),
       sb.from("alineaciones").select("fecha_id, player_id").eq("user_id", uid),
+      sb.from("puntajes").select("*"),
     ]);
     const fallo = res.find((r) => r.error);
     if (fallo) return mostrarError("No se pudieron cargar los datos: " + fallo.error.message);
 
-    const [perfilR, jugadoresR, perfilesR, settingsR, fechasR, equipoR, ejR, alinR] = res.map((r) => r.data);
+    const [perfilR, jugadoresR, perfilesR, settingsR, fechasR, equipoR, ejR, alinR, puntajesR] = res.map((r) => r.data);
     const porId = Object.fromEntries(jugadoresR.map((j) => [j.id, j]));
     const proxima = fechasR.find((f) => f.estado === "abierta");
 
@@ -447,6 +494,10 @@
       presupuesto: Number(settingsR.value),
       bloqueado: !!proxima && new Date(proxima.deadline) <= new Date(),
       ultima,
+      uid,
+      fechas: fechasR,
+      perfiles: perfilesR,
+      puntajes: puntajesR,
     };
 
     $("nombre-usuario").textContent = perfilR.nombre_google || perfilR.email;
@@ -464,7 +515,9 @@
     if (perfilR.is_admin) {
       renderAdmin(perfilesR, porId);
       renderFechas(fechasR);
+      renderCarga(fechasR);
     }
+    renderTabla();
     renderPlantel(jugadoresR);
   }
 
@@ -800,6 +853,193 @@
     if (error) return mostrarError(error.message);
     recargar();
   };
+
+  // ---------- Tabla de posiciones ----------
+  function nombreParticipante(userId) {
+    const p = DATA.perfiles.find((x) => x.id === userId);
+    if (p && p.player_id && DATA.porId[p.player_id]) return DATA.porId[p.player_id].nombre;
+    return (p && (p.nombre_google || p.email)) || "Sin nombre";
+  }
+
+  // Filas [id, nombre, puntos] ordenadas; los empates comparten posición
+  function tablaOrdenada(filas, esYo) {
+    filas.sort((a, b) => b[2] - a[2]);
+    const tabla = el("table", undefined, "tabla-pos");
+    let pos = 0;
+    filas.forEach((f, i) => {
+      if (i === 0 || f[2] !== filas[i - 1][2]) pos = i + 1;
+      const tr = el("tr");
+      if (esYo && esYo(f[0])) tr.className = "yo";
+      tr.append(el("td", String(pos), "pos"), el("td", f[1]), el("td", Number(f[2]).toFixed(1), "num"));
+      tabla.append(tr);
+    });
+    return tabla;
+  }
+
+  function renderTabla() {
+    const sel = $("sel-tabla");
+    const previo = sel.value;
+    const puntuadas = DATA.fechas.filter((f) => f.estado === "puntuada");
+    sel.replaceChildren(
+      opcion("general", "Tabla general"),
+      ...puntuadas.map((f) => opcion(f.id, "Fecha " + f.numero))
+    );
+    if ([...sel.options].some((o) => o.value === previo)) sel.value = previo;
+    sel.onchange = mostrarTabla;
+    mostrarTabla();
+  }
+
+  async function mostrarTabla() {
+    const valor = $("sel-tabla").value;
+    const cont = $("tabla-posiciones");
+    const bloque = $("bloque-puntos-jugadores");
+    cont.replaceChildren();
+    bloque.hidden = true;
+
+    let filas;
+    if (valor === "general") {
+      const suma = {};
+      for (const p of DATA.puntajes) suma[p.user_id] = (suma[p.user_id] || 0) + Number(p.puntos);
+      filas = Object.entries(suma).map(([id, pts]) => [id, nombreParticipante(id), pts]);
+    } else {
+      filas = DATA.puntajes
+        .filter((p) => p.fecha_id === Number(valor))
+        .map((p) => [p.user_id, nombreParticipante(p.user_id), Number(p.puntos)]);
+    }
+
+    if (!filas.length) {
+      cont.append(el("p", "Todavía no hay puntos cargados. La tabla arranca después de la primera fecha.", "nota"));
+      return;
+    }
+    cont.append(tablaOrdenada(filas, (id) => id === DATA.uid));
+
+    // En una fecha puntual, mostrar también los puntos de cada jugador real
+    if (valor !== "general") {
+      const { data, error } = await sb.from("puntos_jugadores").select("*").eq("fecha_id", Number(valor));
+      if (error) return mostrarError(error.message);
+      const filasJ = data.map((j) => [j.player_id, DATA.porId[j.player_id]?.nombre || "?", Number(j.puntos)]);
+      const lista = $("puntos-jugadores");
+      lista.replaceChildren(tablaOrdenada(filasJ));
+      bloque.hidden = false;
+    }
+  }
+
+  // ---------- Admin: carga de puntajes ----------
+  // [campo, encabezado, tipo, posiciones habilitadas (vacío = todas)]
+  const CAMPOS = [
+    ["nota", "Nota", "num", []],
+    ["goles", "Gol", "num", []],
+    ["figura", "Fig", "bool", []],
+    ["valla_invicta", "VI", "bool", ["ARQ", "DEF"]],
+    ["goles_recibidos", "GR", "num", ["ARQ"]],
+    ["goles_en_contra", "GC", "num", []],
+    ["amarillas", "TA", "num", []],
+    ["roja", "TR", "bool", []],
+    ["penales_atajados", "PA", "num", ["ARQ"]],
+    ["penales_errados", "PE", "num", []],
+  ];
+
+  function renderCarga(fechas) {
+    const sel = $("sel-carga");
+    const previo = sel.value;
+    const disponibles = fechas.filter((f) => f.estado !== "abierta");
+    sel.replaceChildren(
+      opcion("", disponibles.length ? "Elegí una fecha cerrada" : "No hay fechas cerradas todavía"),
+      ...disponibles.map((f) => opcion(f.id, "Fecha " + f.numero + (f.estado === "puntuada" ? " (ya puntuada)" : "")))
+    );
+    if ([...sel.options].some((o) => o.value === previo)) sel.value = previo;
+    sel.onchange = armarFormulario;
+    armarFormulario();
+  }
+
+  async function armarFormulario() {
+    const cont = $("form-puntajes");
+    cont.replaceChildren();
+    const fechaId = Number($("sel-carga").value);
+    if (!fechaId) return;
+
+    const { data, error } = await sb.from("estadisticas").select("*").eq("fecha_id", fechaId);
+    if (error) return mostrarError(error.message);
+    const previas = Object.fromEntries(data.map((e) => [e.player_id, e]));
+
+    const tabla = el("table", undefined, "carga");
+    const cabecera = el("tr");
+    cabecera.append(el("th", "Jugador"), ...CAMPOS.map((c) => el("th", c[1])));
+    tabla.append(cabecera);
+
+    for (const j of DATA.jugadores) {
+      const tr = el("tr");
+      const tdNombre = el("td", j.nombre + " ");
+      tdNombre.append(el("small", SINGULAR[j.posicion]));
+      tr.append(tdNombre);
+      const previa = previas[j.id];
+
+      for (const [campo, , tipo, habilitadas] of CAMPOS) {
+        const input = el("input");
+        input.dataset.player = j.id;
+        input.dataset.campo = campo;
+        input.disabled = habilitadas.length > 0 && !habilitadas.includes(j.posicion);
+        input.setAttribute("aria-label", campo + " de " + j.nombre);
+        if (tipo === "bool") {
+          input.type = "checkbox";
+          input.checked = !!(previa && previa[campo]);
+        } else {
+          input.type = "number";
+          input.min = campo === "nota" ? 1 : 0;
+          input.max = campo === "nota" ? 10 : campo === "amarillas" ? 2 : 99;
+          input.step = campo === "nota" ? 0.5 : 1;
+          input.inputMode = "decimal";
+          if (previa) input.value = campo === "nota" ? previa.nota : previa[campo] || "";
+        }
+        const td = el("td");
+        td.append(input);
+        tr.append(td);
+      }
+      tabla.append(tr);
+    }
+
+    const scroll = el("div", undefined, "scroll");
+    scroll.append(tabla);
+    const boton = el("button", "Guardar y calcular puntos");
+    boton.style.marginTop = "16px";
+    const msg = el("p");
+    boton.onclick = () => guardarPuntajes(fechaId, tabla, msg);
+    cont.append(scroll, boton, msg);
+  }
+
+  async function guardarPuntajes(fechaId, tabla, msg) {
+    msg.className = "error";
+    const filas = {};
+    for (const input of tabla.querySelectorAll("input")) {
+      const id = Number(input.dataset.player);
+      filas[id] = filas[id] || { fecha_id: fechaId, player_id: id };
+      const campo = input.dataset.campo;
+      if (input.type === "checkbox") filas[id][campo] = input.checked && !input.disabled;
+      else filas[id][campo] = input.value === "" || input.disabled ? null : Number(input.value);
+    }
+
+    const aGuardar = [];
+    for (const f of Object.values(filas)) {
+      if (f.nota === null) continue; // no jugó
+      if (f.nota < 1 || f.nota > 10) {
+        return (msg.textContent = "La nota de " + DATA.porId[f.player_id].nombre + " tiene que estar entre 1 y 10.");
+      }
+      for (const [campo, , tipo] of CAMPOS) if (tipo === "num" && f[campo] === null) f[campo] = 0;
+      aGuardar.push(f);
+    }
+    if (!aGuardar.length) return (msg.textContent = "Cargá la nota de al menos un jugador.");
+
+    const borrado = await sb.from("estadisticas").delete().eq("fecha_id", fechaId);
+    if (borrado.error) return (msg.textContent = borrado.error.message);
+    const alta = await sb.from("estadisticas").insert(aGuardar);
+    if (alta.error) return (msg.textContent = alta.error.message);
+    const calculo = await sb.rpc("calcular_fecha", { p_fecha_id: fechaId });
+    if (calculo.error) return (msg.textContent = calculo.error.message);
+
+    msg.className = "ok";
+    msg.textContent = "Puntos calculados. La tabla ya está actualizada.";
+    recargar();
+  }
 
   // ---------- Plantel ----------
   function renderPlantel(jugadores) {
