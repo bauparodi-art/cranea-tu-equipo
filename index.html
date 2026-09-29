@@ -10,12 +10,13 @@
 <style>
   :root {
     --cesped: #1F5B3A;
-    --cesped-oscuro: #143F28;
+    --cesped-claro: #256B45;
     --cal: #F3F6F0;
     --cinta: #F2C230;
     --texto: #1B2A21;
     --suave: #5E6F64;
     --linea: #D5DDD3;
+    --rojo: #A12A1E;
   }
   * { box-sizing: border-box; }
   body {
@@ -27,7 +28,7 @@
     background: var(--cal);
   }
 
-  /* Cabecera: mitad de cancha dibujada con cal */
+  /* ---------- Cabecera ---------- */
   header {
     position: relative;
     overflow: hidden;
@@ -35,7 +36,7 @@
     color: var(--cal);
     padding: 48px 24px 40px;
   }
-  header::before {            /* círculo central */
+  header::before {
     content: "";
     position: absolute;
     width: 360px; height: 360px;
@@ -43,7 +44,7 @@
     border: 3px solid rgba(243, 246, 240, .35);
     border-radius: 50%;
   }
-  header::after {             /* línea de mitad de cancha */
+  header::after {
     content: "";
     position: absolute;
     top: 0; bottom: 0; right: 58px;
@@ -61,7 +62,7 @@
   .bajada { margin: 12px 0 0; max-width: 34ch; opacity: .9; }
   .usuario { display: flex; gap: 12px; align-items: center; margin-top: 20px; }
 
-  main { max-width: 720px; margin: 0 auto; padding: 32px 24px 64px; }
+  main { max-width: 720px; margin: 0 auto; padding: 32px 20px 64px; }
   h2 {
     font-family: "Barlow Condensed", sans-serif;
     font-weight: 600;
@@ -81,17 +82,18 @@
     background: var(--cinta);
     color: var(--texto);
   }
+  button:disabled { opacity: .5; cursor: not-allowed; }
   button.secundario {
     background: transparent;
     color: inherit;
     border: 2px solid currentColor;
     padding: 6px 14px;
   }
-  button:focus-visible, select:focus-visible {
+  button:focus-visible, select:focus-visible, input:focus-visible {
     outline: 3px solid var(--cinta);
     outline-offset: 2px;
   }
-  select {
+  select, input {
     font: 16px "Barlow", sans-serif;
     padding: 9px 10px;
     border: 2px solid var(--linea);
@@ -99,7 +101,8 @@
     background: #fff;
     max-width: 100%;
   }
-  .fila { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  label { display: flex; flex-direction: column; gap: 4px; font-size: 15px; color: var(--suave); }
+  .fila { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; }
 
   .estado {
     border-left: 6px solid var(--cesped);
@@ -108,16 +111,158 @@
   }
   .estado.pendiente { border-left-color: var(--cinta); }
 
+  /* ---------- Canchita ---------- */
+  .cancha {
+    position: relative;
+    overflow: hidden;
+    margin-top: 16px;
+    padding: 36px 6px 28px;
+    border-radius: 10px;
+    display: grid;
+    gap: 22px;
+    background: repeating-linear-gradient(
+      180deg, var(--cesped) 0 48px, var(--cesped-claro) 48px 96px);
+  }
+  .cancha::before {           /* medialuna del círculo central */
+    content: "";
+    position: absolute;
+    width: 140px; height: 140px;
+    left: 50%; top: -70px;
+    margin-left: -70px;
+    border: 2px solid rgba(243, 246, 240, .5);
+    border-radius: 50%;
+  }
+  .cancha::after {            /* área grande */
+    content: "";
+    position: absolute;
+    left: 22%; right: 22%; bottom: 0;
+    height: 92px;
+    border: 2px solid rgba(243, 246, 240, .5);
+    border-bottom: 0;
+  }
+  .linea-cancha {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+  }
+  .slot {
+    width: 104px;
+    padding: 4px 2px;
+    background: transparent;
+    color: var(--cal);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    border-radius: 8px;
+  }
+  .slot:disabled { opacity: 1; cursor: default; }
+  .camiseta {
+    position: relative;
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--cal);
+    color: var(--cesped);
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 18px;
+  }
+  .slot.vacio .camiseta {
+    background: transparent;
+    color: var(--cal);
+    border: 2px dashed rgba(243, 246, 240, .7);
+    font-size: 26px;
+  }
+  .slot.nuevo .camiseta { box-shadow: 0 0 0 3px var(--cinta); }
+  .cinta-capitan {
+    position: absolute;
+    top: -4px; right: -8px;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--cinta);
+    color: var(--texto);
+    font-size: 13px;
+    display: grid;
+    place-items: center;
+  }
+  .slot .nombre {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.15;
+    text-align: center;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .banco {
+    margin-top: 10px;
+    padding: 12px 6px 8px;
+    border-radius: 10px;
+    background: #fff;
+    border: 2px solid var(--linea);
+  }
+  .banco .slot { color: var(--texto); }
+  .banco .slot.vacio .camiseta { color: var(--suave); border-color: var(--suave); }
+  .banco .camiseta { background: var(--cesped); color: var(--cal); }
+  .banco-titulo { margin: 0 0 6px 8px; font-size: 14px; color: var(--suave); }
+
+  .resumen {
+    margin: 20px 0 16px;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 24px;
+    line-height: 1.3;
+    font-variant-numeric: tabular-nums;
+  }
+  .resumen .excedido { color: var(--rojo); }
+
+  /* ---------- Hoja para elegir jugador ---------- */
+  dialog {
+    width: min(480px, calc(100vw - 24px));
+    max-height: 85vh;
+    border: 0;
+    border-radius: 12px;
+    padding: 20px;
+    color: var(--texto);
+  }
+  dialog::backdrop { background: rgba(20, 40, 28, .55); }
+  dialog h3 { margin-top: 0; font-size: 22px; font-family: "Barlow Condensed", sans-serif; }
+  .opcion-jugador {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    background: transparent;
+    border-radius: 0;
+    border-bottom: 1px solid var(--linea);
+    padding: 12px 4px;
+    font-weight: 400;
+  }
+  .opcion-jugador small { display: block; color: var(--suave); font-size: 13px; }
+  .opcion-jugador .precio {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 20px;
+  }
+  .acciones-hoja { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+
   table { width: 100%; border-collapse: collapse; }
-  td { padding: 7px 0; border-bottom: 1px solid var(--linea); }
-  td.precio {
+  td { padding: 7px 0; border-bottom: 1px solid var(--linea); vertical-align: middle; }
+  td.num {
     text-align: right;
     font-family: "Barlow Condensed", sans-serif;
     font-weight: 600;
     font-size: 20px;
     font-variant-numeric: tabular-nums;
   }
-  .error { color: #A12A1E; font-weight: 600; }
+  .error { color: var(--rojo); font-weight: 600; }
+  .ok { color: var(--cesped); font-weight: 600; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -126,7 +271,7 @@
 <header>
   <div class="cabecera">
     <h1>Cranea tu<br>equipo!</h1>
-    <p class="bajada">El fantasy del club. Armá tu once de seis y sumá puntos sábado a sábado.</p>
+    <p class="bajada">El fantasy del club. Armá tu equipo y sumá puntos sábado a sábado.</p>
     <div class="usuario" id="barra-usuario" hidden>
       <span id="nombre-usuario"></span>
       <button class="secundario" id="btn-salir">Salir</button>
@@ -146,9 +291,41 @@
   <section id="vista-app" hidden>
     <div id="estado" class="estado"></div>
 
+    <!-- Mi equipo -->
+    <section id="vista-equipo" hidden>
+      <h2>Mi equipo</h2>
+      <p id="estado-mercado" class="nota"></p>
+
+      <label>Formación (defensores, mediocampistas, delanteros)
+        <select id="sel-formacion"></select>
+      </label>
+
+      <div class="cancha" id="cancha"></div>
+      <div class="banco">
+        <p class="banco-titulo">Suplentes: entran si un titular de su puesto no juega</p>
+        <div class="linea-cancha" id="banco"></div>
+      </div>
+
+      <p class="nota" style="margin-top:12px">Tocá un puesto para elegir o cambiar al jugador. La C amarilla marca al capitán, que suma el doble en goles y figura.</p>
+
+      <div class="resumen" id="resumen"></div>
+      <button id="btn-guardar">Guardar equipo</button>
+      <p id="msg-equipo"></p>
+    </section>
+
+    <!-- Admin -->
     <section id="panel-admin" hidden>
       <h2>Aprobar jugadores</h2>
       <div id="lista-pendientes"></div>
+
+      <h2>Fechas</h2>
+      <p class="nota">Hasta el cierre del mercado, cada uno puede cambiar su equipo. Cuando termina la fecha, tocá "Cerrar fecha": se guardan los equipos de todos y se abre el mercado para la siguiente.</p>
+      <div class="fila">
+        <label>Número <input type="number" id="in-numero" min="1" style="width: 90px"></label>
+        <label>Cierre del mercado <input type="datetime-local" id="in-deadline"></label>
+        <button id="btn-fecha">Agregar fecha</button>
+      </div>
+      <div id="lista-fechas"></div>
     </section>
 
     <h2>Plantel</h2>
@@ -159,29 +336,64 @@
   <p class="error" id="error" hidden></p>
 </main>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  // ==== CONFIGURACIÓN: completá con los datos de tu proyecto ====
-  // Supabase > Project Settings > API Keys. La publishable (o anon) key es pública:
-  // la seguridad la dan las reglas RLS de la base, no esta clave.
-  const SUPABASE_URL = "https://miuybthscredwyhslotd.supabase.co";
-  const SUPABASE_KEY = "sb_publishable_Bt-dprsAYAVLXRsX7XaBfg_ygHrJ0M6";
-  // ===============================================================
+<!-- Hoja para elegir jugador -->
+<dialog id="hoja">
+  <h3 id="hoja-titulo"></h3>
+  <div id="hoja-lista"></div>
+  <div class="acciones-hoja" id="hoja-acciones"></div>
+</dialog>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js"></script>
+<script>
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   const $ = (id) => document.getElementById(id);
-  const POSICIONES = { ARQ: "Arqueros", DEF: "Defensores", MID: "Mediocampistas", DEL: "Delanteros" };
 
+  const POSICIONES = { ARQ: "Arqueros", DEF: "Defensores", MID: "Mediocampistas", DEL: "Delanteros" };
+  const SINGULAR = { ARQ: "arquero", DEF: "defensor", MID: "mediocampista", DEL: "delantero" };
+  const FORMACIONES = ["2-2-1", "2-1-2", "1-2-2", "3-1-1", "1-3-1"];
+  const CAMBIOS_POR_FECHA = 1;
+
+  // Estado en memoria
+  let DATA = { jugadores: [], porId: {}, presupuesto: 68, bloqueado: false, ultima: null };
+  let equipo = nuevoEquipo();
+
+  function nuevoEquipo() {
+    return {
+      formacion: "2-2-1",
+      tit: { ARQ: [], DEF: [], MID: [], DEL: [] },
+      sup: { ARQ: null, DEF: null, MID: null, DEL: null },
+      capitan: null,
+    };
+  }
+
+  // ---------- Utilidades ----------
   function mostrarError(msg) {
     $("error").textContent = msg;
     $("error").hidden = !msg;
   }
-
   function el(tag, texto, clase) {
     const e = document.createElement(tag);
     if (texto !== undefined) e.textContent = texto;
     if (clase) e.className = clase;
     return e;
+  }
+  function opcion(valor, texto) {
+    const o = el("option", texto);
+    o.value = valor;
+    return o;
+  }
+  function fechaLinda(iso) {
+    return new Date(iso).toLocaleString("es-AR", {
+      weekday: "long", day: "numeric", month: "numeric", hour: "2-digit", minute: "2-digit",
+    });
+  }
+  function apellido(nombre) {
+    const partes = nombre.split(" ");
+    return partes.length > 1 ? partes.slice(1).join(" ") : nombre;
+  }
+  async function recargar() {
+    render((await sb.auth.getSession()).data.session);
   }
 
   // ---------- Login / logout ----------
@@ -190,7 +402,6 @@
       provider: "google",
       options: { redirectTo: window.location.origin + window.location.pathname },
     });
-
   $("btn-salir").onclick = () => sb.auth.signOut();
 
   // setTimeout evita llamar a Supabase dentro del callback de auth (puede trabarse)
@@ -205,26 +416,56 @@
     if (!sesion) return;
 
     const uid = sesion.user.id;
-    const [perfilRes, jugadoresRes, perfilesRes, settingsRes] = await Promise.all([
+    const res = await Promise.all([
       sb.from("profiles").select("*").eq("id", uid).single(),
       sb.from("players").select("*").eq("activo", true).order("posicion").order("ranking"),
       sb.from("profiles").select("id, email, nombre_google, player_id, aprobado"),
       sb.from("settings").select("*").eq("key", "presupuesto").single(),
+      sb.from("fechas").select("*").order("numero"),
+      sb.from("equipos").select("*").eq("user_id", uid).maybeSingle(),
+      sb.from("equipo_jugadores").select("*").eq("user_id", uid),
+      sb.from("alineaciones").select("fecha_id, player_id").eq("user_id", uid),
     ]);
-
-    const fallo = [perfilRes, jugadoresRes, perfilesRes, settingsRes].find((r) => r.error);
+    const fallo = res.find((r) => r.error);
     if (fallo) return mostrarError("No se pudieron cargar los datos: " + fallo.error.message);
 
-    const perfil = perfilRes.data;
-    const jugadores = jugadoresRes.data;
-    const perfiles = perfilesRes.data;
-    const porId = Object.fromEntries(jugadores.map((j) => [j.id, j]));
+    const [perfilR, jugadoresR, perfilesR, settingsR, fechasR, equipoR, ejR, alinR] = res.map((r) => r.data);
+    const porId = Object.fromEntries(jugadoresR.map((j) => [j.id, j]));
+    const proxima = fechasR.find((f) => f.estado === "abierta");
 
-    $("nombre-usuario").textContent = perfil.nombre_google || perfil.email;
-    renderEstado(perfil, jugadores, perfiles, porId);
-    if (perfil.is_admin) renderAdmin(perfiles, porId);
-    $("panel-admin").hidden = !perfil.is_admin;
-    renderPlantel(jugadores, settingsRes.data.value);
+    // Último equipo guardado en una fecha cerrada (referencia para contar cambios)
+    const numeroDe = Object.fromEntries(fechasR.map((f) => [f.id, f.numero]));
+    let ultima = null;
+    if (alinR.length) {
+      const idUltima = alinR.reduce((a, b) => (numeroDe[b.fecha_id] > numeroDe[a.fecha_id] ? b : a)).fecha_id;
+      ultima = new Set(alinR.filter((a) => a.fecha_id === idUltima).map((a) => a.player_id));
+    }
+
+    DATA = {
+      jugadores: jugadoresR,
+      porId,
+      presupuesto: Number(settingsR.value),
+      bloqueado: !!proxima && new Date(proxima.deadline) <= new Date(),
+      ultima,
+    };
+
+    $("nombre-usuario").textContent = perfilR.nombre_google || perfilR.email;
+    renderEstado(perfilR, jugadoresR, perfilesR, porId);
+
+    const aprobado = perfilR.aprobado && perfilR.player_id;
+    $("vista-equipo").hidden = !aprobado;
+    if (aprobado) {
+      cargarEquipo(equipoR, ejR, porId);
+      renderMercado(proxima);
+      renderEquipo();
+    }
+
+    $("panel-admin").hidden = !perfilR.is_admin;
+    if (perfilR.is_admin) {
+      renderAdmin(perfilesR, porId);
+      renderFechas(fechasR);
+    }
+    renderPlantel(jugadoresR);
   }
 
   // ---------- ¿Quién sos? ----------
@@ -234,10 +475,7 @@
     caja.className = "estado";
 
     if (perfil.aprobado && perfil.player_id) {
-      caja.append(
-        el("h3", "Sos " + porId[perfil.player_id].nombre),
-        el("p", "Tu cuenta está aprobada. El armado de equipos se habilita pronto.")
-      );
+      caja.append(el("h3", "Sos " + porId[perfil.player_id].nombre), el("p", "Tu cuenta está aprobada."));
       return;
     }
 
@@ -257,52 +495,264 @@
     }
 
     const select = el("select");
-    select.append(el("option", "Elegí tu nombre…"));
-    select.options[0].value = "";
+    select.append(opcion("", "Elegí tu nombre…"));
     for (const j of jugadores) {
       if (tomados.has(j.id)) continue;
-      const op = el("option", j.nombre);
-      op.value = j.id;
-      if (j.id === perfil.player_id) op.selected = true;
-      select.append(op);
+      const o = opcion(j.id, j.nombre);
+      if (j.id === perfil.player_id) o.selected = true;
+      select.append(o);
     }
-
     const boton = el("button", "Soy este jugador");
     boton.onclick = async () => {
       if (!select.value) return mostrarError("Elegí un nombre de la lista.");
       const { error } = await sb.rpc("reclamar_jugador", { p_player_id: Number(select.value) });
       if (error) return mostrarError(error.message);
-      render((await sb.auth.getSession()).data.session);
+      recargar();
     };
-
     const fila = el("div", undefined, "fila");
     fila.append(select, boton);
     caja.append(fila);
   }
 
-  // ---------- Panel admin ----------
+  // ---------- Mi equipo: estado ----------
+  function cupos(formacion) {
+    const [d, m, l] = formacion.split("-").map(Number);
+    return { ARQ: 1, DEF: d, MID: m, DEL: l };
+  }
+  function titulares() {
+    return Object.values(equipo.tit).flat().filter(Boolean);
+  }
+  function suplentes() {
+    return Object.values(equipo.sup).filter(Boolean);
+  }
+  function todos() {
+    return [...titulares(), ...suplentes()];
+  }
+  function cambiosUsados() {
+    if (!DATA.ultima) return 0;
+    return todos().filter((id) => !DATA.ultima.has(id)).length;
+  }
+
+  function ajustarAFormacion() {
+    const c = cupos(equipo.formacion);
+    for (const pos in c) {
+      const lista = equipo.tit[pos];
+      lista.length = Math.min(lista.length, c[pos]);
+      while (lista.length < c[pos]) lista.push(null);
+    }
+    if (!titulares().includes(equipo.capitan)) equipo.capitan = null;
+  }
+
+  function cargarEquipo(eq, filas, porId) {
+    equipo = nuevoEquipo();
+    if (eq) {
+      equipo.formacion = eq.formacion;
+      equipo.capitan = eq.capitan_id;
+      for (const f of filas) {
+        const pos = porId[f.player_id]?.posicion;
+        if (!pos) continue;
+        if (f.titular) equipo.tit[pos].push(f.player_id);
+        else equipo.sup[pos] = f.player_id;
+      }
+    }
+    ajustarAFormacion();
+  }
+
+  function renderMercado(proxima) {
+    let texto;
+    if (!proxima) texto = "Todavía no hay fecha programada. Podés ir armando tu equipo.";
+    else if (DATA.bloqueado) texto = "Fecha " + proxima.numero + " en juego: el mercado está cerrado hasta que termine.";
+    else texto = "Fecha " + proxima.numero + ": podés hacer cambios hasta el " + fechaLinda(proxima.deadline) + ".";
+    $("estado-mercado").textContent = texto;
+  }
+
+  // ---------- Mi equipo: canchita ----------
+  function crearSlot(tipo, pos, i, id) {
+    const b = el("button", undefined, "slot");
+    const camiseta = el("span", undefined, "camiseta");
+    if (id) {
+      const j = DATA.porId[id];
+      camiseta.textContent = Number(j.precio).toFixed(1);
+      if (tipo === "tit" && id === equipo.capitan) camiseta.append(el("span", "C", "cinta-capitan"));
+      if (DATA.ultima && !DATA.ultima.has(id)) b.classList.add("nuevo");
+      b.append(camiseta, el("span", apellido(j.nombre), "nombre"));
+      b.setAttribute("aria-label", SINGULAR[pos] + ": " + j.nombre);
+    } else {
+      b.classList.add("vacio");
+      camiseta.textContent = "+";
+      b.append(camiseta, el("span", SINGULAR[pos], "nombre"));
+      b.setAttribute("aria-label", "Elegir " + SINGULAR[pos]);
+    }
+    b.disabled = DATA.bloqueado;
+    b.onclick = () => abrirHoja(tipo, pos, i);
+    return b;
+  }
+
+  function renderEquipo() {
+    // Formación
+    const sf = $("sel-formacion");
+    sf.replaceChildren(...FORMACIONES.map((f) => opcion(f, f)));
+    sf.value = equipo.formacion;
+    sf.disabled = DATA.bloqueado;
+    sf.onchange = () => {
+      equipo.formacion = sf.value;
+      ajustarAFormacion();
+      renderEquipo();
+    };
+
+    // Cancha: de arriba (ataque) hacia abajo (arco)
+    const cancha = $("cancha");
+    cancha.replaceChildren();
+    for (const pos of ["DEL", "MID", "DEF", "ARQ"]) {
+      const linea = el("div", undefined, "linea-cancha");
+      equipo.tit[pos].forEach((id, i) => linea.append(crearSlot("tit", pos, i, id)));
+      cancha.append(linea);
+    }
+
+    // Banco
+    const banco = $("banco");
+    banco.replaceChildren();
+    for (const pos of ["ARQ", "DEF", "MID", "DEL"]) banco.append(crearSlot("sup", pos, 0, equipo.sup[pos]));
+
+    // Resumen: presupuesto, capitán y cambios
+    const gastado = todos().reduce((acc, id) => acc + Number(DATA.porId[id].precio), 0);
+    const resto = DATA.presupuesto - gastado;
+    const r = $("resumen");
+    r.replaceChildren();
+
+    const lineaPlata = el("div",
+      "Gastás " + gastado.toFixed(1) + " de " + DATA.presupuesto +
+      (resto >= 0 ? ". Te quedan " + resto.toFixed(1) + "." : ". Te pasaste por " + (-resto).toFixed(1) + "."));
+    if (resto < 0) lineaPlata.className = "excedido";
+    r.append(lineaPlata);
+
+    r.append(el("div", "Capitán: " + (equipo.capitan ? DATA.porId[equipo.capitan].nombre : "sin elegir")));
+
+    if (DATA.ultima) {
+      const usados = cambiosUsados();
+      const lineaCambios = el("div", "Cambios de esta fecha: " + usados + " de " + CAMBIOS_POR_FECHA + ".");
+      if (usados > CAMBIOS_POR_FECHA) lineaCambios.className = "excedido";
+      r.append(lineaCambios);
+    } else {
+      r.append(el("div", "Armado libre hasta el cierre de la primera fecha."));
+    }
+
+    $("btn-guardar").disabled = DATA.bloqueado;
+  }
+
+  // ---------- Hoja para elegir jugador ----------
+  function abrirHoja(tipo, pos, i) {
+    const actual = tipo === "tit" ? equipo.tit[pos][i] : equipo.sup[pos];
+    const titPos = equipo.tit[pos];
+    const supPos = equipo.sup[pos];
+    const usados = new Set(todos());
+    const hoja = $("hoja");
+
+    const aplicar = (fn) => {
+      fn();
+      hoja.close();
+      ajustarAFormacion();
+      renderEquipo();
+    };
+
+    $("hoja-titulo").textContent =
+      (actual ? "Cambiar " : "Elegir ") + SINGULAR[pos] + (tipo === "sup" ? " suplente" : " titular");
+
+    const lista = $("hoja-lista");
+    lista.replaceChildren();
+    for (const j of DATA.jugadores.filter((x) => x.posicion === pos)) {
+      let detalle = "";
+      let accion = null;
+
+      if (j.id === actual) {
+        detalle = "Elegido";
+      } else if (tipo === "tit" && j.id === supPos) {
+        detalle = "Está en tu banco: se intercambian";
+        accion = () => { equipo.sup[pos] = actual; equipo.tit[pos][i] = j.id; };
+      } else if (tipo === "sup" && titPos.includes(j.id)) {
+        detalle = "Es titular: se intercambian";
+        accion = () => { titPos[titPos.indexOf(j.id)] = actual; equipo.sup[pos] = j.id; };
+      } else if (usados.has(j.id)) {
+        detalle = "Ya está en tu equipo";
+      } else {
+        if (DATA.ultima && !DATA.ultima.has(j.id)) detalle = "Usa tu cambio de la fecha";
+        accion = () => {
+          if (tipo === "tit") equipo.tit[pos][i] = j.id;
+          else equipo.sup[pos] = j.id;
+        };
+      }
+
+      const b = el("button", undefined, "opcion-jugador");
+      const izq = el("span", j.nombre);
+      if (detalle) izq.append(el("small", detalle));
+      b.append(izq, el("span", Number(j.precio).toFixed(1), "precio"));
+      if (accion) b.onclick = () => aplicar(accion);
+      else b.disabled = true;
+      lista.append(b);
+    }
+
+    const acciones = $("hoja-acciones");
+    acciones.replaceChildren();
+    if (actual && tipo === "tit" && actual !== equipo.capitan) {
+      const bc = el("button", "Hacer capitán");
+      bc.onclick = () => aplicar(() => (equipo.capitan = actual));
+      acciones.append(bc);
+    }
+    if (actual) {
+      const bq = el("button", "Sacar del equipo", "secundario");
+      bq.onclick = () => aplicar(() => {
+        if (tipo === "tit") equipo.tit[pos][i] = null;
+        else equipo.sup[pos] = null;
+      });
+      acciones.append(bq);
+    }
+    const bx = el("button", "Cancelar", "secundario");
+    bx.onclick = () => hoja.close();
+    acciones.append(bx);
+
+    hoja.showModal();
+  }
+
+  // ---------- Guardar ----------
+  $("btn-guardar").onclick = async () => {
+    const msg = $("msg-equipo");
+    msg.className = "error";
+    if (titulares().length !== 6) return (msg.textContent = "Te faltan titulares por elegir.");
+    if (suplentes().length !== 4) return (msg.textContent = "Te faltan suplentes por elegir.");
+    if (!equipo.capitan) return (msg.textContent = "Elegí a tu capitán: tocá un titular y después Hacer capitán.");
+    if (cambiosUsados() > CAMBIOS_POR_FECHA)
+      return (msg.textContent = "Solo podés hacer " + CAMBIOS_POR_FECHA + " cambio por fecha.");
+
+    const { error } = await sb.rpc("guardar_equipo", {
+      p_formacion: equipo.formacion,
+      p_titulares: titulares(),
+      p_suplentes: [equipo.sup.ARQ, equipo.sup.DEF, equipo.sup.MID, equipo.sup.DEL],
+      p_capitan: equipo.capitan,
+    });
+    if (error) return (msg.textContent = error.message);
+    msg.className = "ok";
+    msg.textContent = "Equipo guardado.";
+  };
+
+  // ---------- Admin: aprobaciones ----------
   function renderAdmin(perfiles, porId) {
     const lista = $("lista-pendientes");
     lista.replaceChildren();
     const pendientes = perfiles.filter((p) => p.player_id && !p.aprobado);
-
     if (!pendientes.length) {
       lista.append(el("p", "No hay cuentas esperando aprobación.", "nota"));
       return;
     }
-
     const tabla = el("table");
     for (const p of pendientes) {
       const tr = el("tr");
-      tr.append(
-        el("td", (p.nombre_google || p.email) + " dice ser " + porId[p.player_id].nombre)
-      );
-      const td = el("td", undefined, "precio");
+      tr.append(el("td", (p.nombre_google || p.email) + " dice ser " + porId[p.player_id].nombre));
+      const td = el("td", undefined, "num");
       const boton = el("button", "Aprobar");
       boton.onclick = async () => {
         const { error } = await sb.from("profiles").update({ aprobado: true }).eq("id", p.id);
         if (error) return mostrarError(error.message);
-        render((await sb.auth.getSession()).data.session);
+        recargar();
       };
       td.append(boton);
       tr.append(td);
@@ -311,9 +761,49 @@
     lista.append(tabla);
   }
 
-  // ---------- Plantel con cotizaciones ----------
-  function renderPlantel(jugadores, presupuesto) {
-    $("texto-presupuesto").textContent = "Presupuesto por equipo: " + presupuesto + " millones.";
+  // ---------- Admin: fechas ----------
+  function renderFechas(fechas) {
+    const cont = $("lista-fechas");
+    cont.replaceChildren();
+    if (!fechas.length) {
+      cont.append(el("p", "Todavía no cargaste ninguna fecha.", "nota"));
+      return;
+    }
+    const tabla = el("table");
+    for (const f of fechas) {
+      const tr = el("tr");
+      tr.append(el("td", "Fecha " + f.numero), el("td", fechaLinda(f.deadline)));
+      const td = el("td", undefined, "num");
+      if (f.estado === "abierta" && new Date(f.deadline) <= new Date()) {
+        const b = el("button", "Cerrar fecha");
+        b.onclick = async () => {
+          if (!confirm("¿Cerrar la fecha " + f.numero + "? Se guardan los equipos de todos y se abre el mercado para la siguiente.")) return;
+          const { error } = await sb.rpc("cerrar_fecha", { p_fecha_id: f.id });
+          if (error) return mostrarError(error.message);
+          recargar();
+        };
+        td.append(b);
+      } else {
+        td.textContent = f.estado;
+      }
+      tr.append(td);
+      tabla.append(tr);
+    }
+    cont.append(tabla);
+  }
+
+  $("btn-fecha").onclick = async () => {
+    const numero = Number($("in-numero").value);
+    const deadline = $("in-deadline").value;
+    if (!numero || !deadline) return mostrarError("Completá el número y el cierre del mercado.");
+    const { error } = await sb.from("fechas").insert({ numero, deadline: new Date(deadline).toISOString() });
+    if (error) return mostrarError(error.message);
+    recargar();
+  };
+
+  // ---------- Plantel ----------
+  function renderPlantel(jugadores) {
+    $("texto-presupuesto").textContent = "Presupuesto por equipo: " + DATA.presupuesto + " millones.";
     const cont = $("plantel");
     cont.replaceChildren();
     for (const [codigo, nombre] of Object.entries(POSICIONES)) {
@@ -321,7 +811,7 @@
       const tabla = el("table");
       for (const j of jugadores.filter((x) => x.posicion === codigo)) {
         const tr = el("tr");
-        tr.append(el("td", j.nombre), el("td", Number(j.precio).toFixed(1), "precio"));
+        tr.append(el("td", j.nombre), el("td", Number(j.precio).toFixed(1), "num"));
         tabla.append(tr);
       }
       cont.append(tabla);
